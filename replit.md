@@ -21,7 +21,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── trading-bot/        # AI Trading Bot Dashboard (React + Vite)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
@@ -34,6 +35,43 @@ artifacts-monorepo/
 ├── tsconfig.json           # Root TS project references
 └── package.json            # Root package with hoisted devDeps
 ```
+
+## AI Trading Bot Dashboard
+
+A full-featured AI-powered real-time stock trading bot monitoring dashboard with:
+
+### Features
+- **Dashboard**: Portfolio overview (value, day P&L, total P&L), 7-day equity curve chart, live system alerts
+- **Live Trading**: Real-time trade feed with buy/sell/hold actions, confidence scores, watchlist with ML predictions
+- **AI Strategies**: Manage 6 ML/RL strategies (DQN, PPO, LSTM, Transformer, Gradient Boost, Hybrid)
+- **Risk Management**: Dynamic stop-loss, position sizing, portfolio diversification toggles with sliders
+- **Market Intelligence**: Market regime detection (bull/bear/sideways/volatile), order book, news sentiment
+- **Analytics**: Sharpe ratio, Sortino ratio, max drawdown, win/loss ratio, profit factor, backtest equity curve
+- **System Logs**: Real-time bot activity logs with level color-coding
+- **Safety Controls**: Start/Stop bot, Emergency Kill Switch, bot health status indicators
+
+### Architecture
+- **Frontend**: React + Vite + Tailwind CSS (dark terminal theme), Recharts for charts, Lucide icons
+- **Backend**: Express 5 with full REST API (all endpoints simulate real trading bot data)
+- **API Contract**: OpenAPI 3.1 spec, codegen via Orval (React Query hooks + Zod schemas)
+- **Real-time**: Auto-refresh every 3 seconds for live-feel data updates
+
+### API Endpoints
+- `GET /api/portfolio` - Portfolio overview with positions
+- `GET /api/portfolio/history?period=7d` - Portfolio value history
+- `GET /api/trades` - Recent trades with ML strategy info
+- `GET /api/strategies` - ML/RL strategy list
+- `POST /api/strategies/{id}/activate|deactivate` - Strategy control
+- `GET /api/risk` / `PUT /api/risk` - Risk settings CRUD
+- `GET /api/market/regime` - Market regime detection
+- `GET /api/market/watchlist` - Watchlist with ML predictions
+- `GET /api/market/orderbook/{symbol}` - Order book data
+- `GET /api/bot/status` - Bot operational status
+- `POST /api/bot/start|stop|kill-switch` - Bot control
+- `GET /api/bot/logs` - Activity logs
+- `GET /api/sentiment` - News sentiment analysis
+- `GET /api/performance` - Performance metrics (Sharpe, Sortino, etc.)
+- `GET /api/performance/backtest` - Backtesting results
 
 ## TypeScript & Composite Projects
 
@@ -56,41 +94,37 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
+- Routes: `src/routes/index.ts` mounts sub-routers; all trading bot API routes
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+
+### `artifacts/trading-bot` (`@workspace/trading-bot`)
+
+React + Vite trading bot monitoring dashboard.
+
+- Dark terminal aesthetic, green/red for profits/losses
+- Auto-refreshing every 3 seconds
+- 7 pages: Dashboard, Live Trading, AI Strategies, Risk Management, Market Intel, Analytics, System Logs
 
 ### `lib/db` (`@workspace/db`)
 
 Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
 ### `lib/api-spec` (`@workspace/api-spec`)
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
+Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages.
 
 Run codegen: `pnpm --filter @workspace/api-spec run codegen`
 
 ### `lib/api-zod` (`@workspace/api-zod`)
 
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from the OpenAPI spec. Used by `api-server` for response validation.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client from the OpenAPI spec.
 
 ### `scripts` (`@workspace/scripts`)
 
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`.

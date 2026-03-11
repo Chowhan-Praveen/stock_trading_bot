@@ -1,22 +1,36 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Trading Bot API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: portfolio
+    description: Portfolio management
+  - name: trades
+    description: Trade history and execution
+  - name: strategies
+    description: ML/RL strategy management
+  - name: risk
+    description: Risk management settings
+  - name: market
+    description: Market data and regime detection
+  - name: bot
+    description: Bot control and monitoring
+  - name: sentiment
+    description: News sentiment analysis
+  - name: performance
+    description: Performance metrics and analytics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +38,313 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /portfolio:
+    get:
+      operationId: getPortfolio
+      tags: [portfolio]
+      summary: Get current portfolio state
+      responses:
+        "200":
+          description: Portfolio data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+
+  /portfolio/history:
+    get:
+      operationId: getPortfolioHistory
+      tags: [portfolio]
+      summary: Get portfolio value history
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1d, 7d, 30d, 90d]
+            default: 7d
+      responses:
+        "200":
+          description: Portfolio history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PortfolioSnapshot"
+
+  /trades:
+    get:
+      operationId: getTrades
+      tags: [trades]
+      summary: Get recent trades
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, open, closed, cancelled]
+            default: all
+      responses:
+        "200":
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+
+  /strategies:
+    get:
+      operationId: getStrategies
+      tags: [strategies]
+      summary: Get available ML/RL strategies
+      responses:
+        "200":
+          description: List of strategies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Strategy"
+
+  /strategies/{id}/activate:
+    post:
+      operationId: activateStrategy
+      tags: [strategies]
+      summary: Activate a strategy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Strategy activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Strategy"
+
+  /strategies/{id}/deactivate:
+    post:
+      operationId: deactivateStrategy
+      tags: [strategies]
+      summary: Deactivate a strategy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Strategy deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Strategy"
+
+  /risk:
+    get:
+      operationId: getRiskSettings
+      tags: [risk]
+      summary: Get risk management settings
+      responses:
+        "200":
+          description: Risk settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskSettings"
+    put:
+      operationId: updateRiskSettings
+      tags: [risk]
+      summary: Update risk management settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiskSettingsUpdate"
+      responses:
+        "200":
+          description: Updated risk settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskSettings"
+
+  /market/regime:
+    get:
+      operationId: getMarketRegime
+      tags: [market]
+      summary: Get current market regime detection
+      responses:
+        "200":
+          description: Market regime data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketRegime"
+
+  /market/watchlist:
+    get:
+      operationId: getWatchlist
+      tags: [market]
+      summary: Get market data for watchlist symbols
+      responses:
+        "200":
+          description: Watchlist market data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketData"
+
+  /market/orderbook/{symbol}:
+    get:
+      operationId: getOrderBook
+      tags: [market]
+      summary: Get order book for a symbol
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order book data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderBook"
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Get bot operational status
+      responses:
+        "200":
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/start:
+    post:
+      operationId: startBot
+      tags: [bot]
+      summary: Start the trading bot
+      responses:
+        "200":
+          description: Bot started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/stop:
+    post:
+      operationId: stopBot
+      tags: [bot]
+      summary: Stop the trading bot
+      responses:
+        "200":
+          description: Bot stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/kill-switch:
+    post:
+      operationId: triggerKillSwitch
+      tags: [bot]
+      summary: Emergency kill switch - halt all trading immediately
+      responses:
+        "200":
+          description: Kill switch triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/logs:
+    get:
+      operationId: getBotLogs
+      tags: [bot]
+      summary: Get recent bot activity logs
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 100
+      responses:
+        "200":
+          description: Bot logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BotLog"
+
+  /sentiment:
+    get:
+      operationId: getNewsSentiment
+      tags: [sentiment]
+      summary: Get news sentiment analysis
+      responses:
+        "200":
+          description: Sentiment data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SentimentItem"
+
+  /performance:
+    get:
+      operationId: getPerformanceMetrics
+      tags: [performance]
+      summary: Get performance metrics and analytics
+      responses:
+        "200":
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceMetrics"
+
+  /performance/backtest:
+    get:
+      operationId: getBacktestResults
+      tags: [performance]
+      summary: Get backtesting results
+      responses:
+        "200":
+          description: Backtest results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacktestResults"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +355,549 @@ components:
       required:
         - status
 
+    Portfolio:
+      type: object
+      properties:
+        totalValue:
+          type: number
+        cashBalance:
+          type: number
+        investedValue:
+          type: number
+        totalPnl:
+          type: number
+        totalPnlPercent:
+          type: number
+        dayPnl:
+          type: number
+        dayPnlPercent:
+          type: number
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Position"
+      required:
+        - totalValue
+        - cashBalance
+        - investedValue
+        - totalPnl
+        - totalPnlPercent
+        - dayPnl
+        - dayPnlPercent
+        - positions
+
+    Position:
+      type: object
+      properties:
+        symbol:
+          type: string
+        quantity:
+          type: number
+        avgPrice:
+          type: number
+        currentPrice:
+          type: number
+        marketValue:
+          type: number
+        pnl:
+          type: number
+        pnlPercent:
+          type: number
+        allocation:
+          type: number
+        sector:
+          type: string
+      required:
+        - symbol
+        - quantity
+        - avgPrice
+        - currentPrice
+        - marketValue
+        - pnl
+        - pnlPercent
+        - allocation
+        - sector
+
+    PortfolioSnapshot:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        value:
+          type: number
+        pnl:
+          type: number
+      required:
+        - timestamp
+        - value
+        - pnl
+
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        action:
+          type: string
+          enum: [buy, sell, hold]
+        quantity:
+          type: number
+        price:
+          type: number
+        totalValue:
+          type: number
+        status:
+          type: string
+          enum: [open, closed, cancelled, pending]
+        strategy:
+          type: string
+        confidence:
+          type: number
+        pnl:
+          type: number
+        timestamp:
+          type: string
+        slippage:
+          type: number
+      required:
+        - id
+        - symbol
+        - action
+        - quantity
+        - price
+        - totalValue
+        - status
+        - strategy
+        - confidence
+        - timestamp
+
+    Strategy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [RL, ML, hybrid]
+        algorithm:
+          type: string
+        isActive:
+          type: boolean
+        accuracy:
+          type: number
+        sharpeRatio:
+          type: number
+        totalTrades:
+          type: number
+        winRate:
+          type: number
+        description:
+          type: string
+        lastTrained:
+          type: string
+        isTraining:
+          type: boolean
+      required:
+        - id
+        - name
+        - type
+        - algorithm
+        - isActive
+        - accuracy
+        - sharpeRatio
+        - totalTrades
+        - winRate
+        - description
+        - lastTrained
+        - isTraining
+
+    RiskSettings:
+      type: object
+      properties:
+        maxDrawdown:
+          type: number
+        stopLossPercent:
+          type: number
+        maxPositionSize:
+          type: number
+        maxPortfolioConcentration:
+          type: number
+        volatilityMultiplier:
+          type: number
+        killSwitchLossThreshold:
+          type: number
+        maxDailyLoss:
+          type: number
+        enableDynamicStopLoss:
+          type: boolean
+        enableVolatilityScaling:
+          type: boolean
+        enablePortfolioDiversification:
+          type: boolean
+      required:
+        - maxDrawdown
+        - stopLossPercent
+        - maxPositionSize
+        - maxPortfolioConcentration
+        - volatilityMultiplier
+        - killSwitchLossThreshold
+        - maxDailyLoss
+        - enableDynamicStopLoss
+        - enableVolatilityScaling
+        - enablePortfolioDiversification
+
+    RiskSettingsUpdate:
+      type: object
+      properties:
+        maxDrawdown:
+          type: number
+        stopLossPercent:
+          type: number
+        maxPositionSize:
+          type: number
+        maxPortfolioConcentration:
+          type: number
+        volatilityMultiplier:
+          type: number
+        killSwitchLossThreshold:
+          type: number
+        maxDailyLoss:
+          type: number
+        enableDynamicStopLoss:
+          type: boolean
+        enableVolatilityScaling:
+          type: boolean
+        enablePortfolioDiversification:
+          type: boolean
+
+    MarketRegime:
+      type: object
+      properties:
+        regime:
+          type: string
+          enum: [bull, bear, sideways, volatile]
+        confidence:
+          type: number
+        vixLevel:
+          type: number
+        trendStrength:
+          type: number
+        momentum:
+          type: number
+        description:
+          type: string
+        signals:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: string
+      required:
+        - regime
+        - confidence
+        - vixLevel
+        - trendStrength
+        - momentum
+        - description
+        - signals
+        - updatedAt
+
+    MarketData:
+      type: object
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        volume:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        open:
+          type: number
+        marketCap:
+          type: number
+        prediction:
+          type: string
+          enum: [strong_buy, buy, hold, sell, strong_sell]
+        predictionConfidence:
+          type: number
+        sector:
+          type: string
+      required:
+        - symbol
+        - name
+        - price
+        - change
+        - changePercent
+        - volume
+        - high
+        - low
+        - open
+        - prediction
+        - predictionConfidence
+        - sector
+
+    OrderBook:
+      type: object
+      properties:
+        symbol:
+          type: string
+        bids:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderBookLevel"
+        asks:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderBookLevel"
+        spread:
+          type: number
+        midPrice:
+          type: number
+        updatedAt:
+          type: string
+      required:
+        - symbol
+        - bids
+        - asks
+        - spread
+        - midPrice
+        - updatedAt
+
+    OrderBookLevel:
+      type: object
+      properties:
+        price:
+          type: number
+        size:
+          type: number
+        total:
+          type: number
+      required:
+        - price
+        - size
+        - total
+
+    BotStatus:
+      type: object
+      properties:
+        isRunning:
+          type: boolean
+        isKillSwitchActive:
+          type: boolean
+        uptime:
+          type: number
+        activeStrategies:
+          type: number
+        pendingOrders:
+          type: number
+        totalOrdersToday:
+          type: number
+        dataFeedStatus:
+          type: string
+          enum: [connected, disconnected, degraded]
+        mlModelStatus:
+          type: string
+          enum: [ready, training, error]
+        rlAgentStatus:
+          type: string
+          enum: [ready, training, exploring, error]
+        lastHeartbeat:
+          type: string
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/BotAlert"
+      required:
+        - isRunning
+        - isKillSwitchActive
+        - uptime
+        - activeStrategies
+        - pendingOrders
+        - totalOrdersToday
+        - dataFeedStatus
+        - mlModelStatus
+        - rlAgentStatus
+        - lastHeartbeat
+        - alerts
+
+    BotAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        level:
+          type: string
+          enum: [info, warning, error, critical]
+        message:
+          type: string
+        timestamp:
+          type: string
+      required:
+        - id
+        - level
+        - message
+        - timestamp
+
+    BotLog:
+      type: object
+      properties:
+        id:
+          type: string
+        level:
+          type: string
+          enum: [info, warning, error, debug]
+        message:
+          type: string
+        source:
+          type: string
+        timestamp:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - level
+        - message
+        - source
+        - timestamp
+
+    SentimentItem:
+      type: object
+      properties:
+        id:
+          type: string
+        headline:
+          type: string
+        source:
+          type: string
+        symbol:
+          type: string
+        sentiment:
+          type: string
+          enum: [positive, negative, neutral]
+        score:
+          type: number
+        impact:
+          type: string
+          enum: [high, medium, low]
+        timestamp:
+          type: string
+        url:
+          type: string
+      required:
+        - id
+        - headline
+        - source
+        - symbol
+        - sentiment
+        - score
+        - impact
+        - timestamp
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        sharpeRatio:
+          type: number
+        sortinoRatio:
+          type: number
+        maxDrawdown:
+          type: number
+        currentDrawdown:
+          type: number
+        winRate:
+          type: number
+        lossRate:
+          type: number
+        profitFactor:
+          type: number
+        totalTrades:
+          type: number
+        winningTrades:
+          type: number
+        losingTrades:
+          type: number
+        avgWin:
+          type: number
+        avgLoss:
+          type: number
+        totalReturn:
+          type: number
+        annualizedReturn:
+          type: number
+        calmarRatio:
+          type: number
+        beta:
+          type: number
+        alpha:
+          type: number
+      required:
+        - sharpeRatio
+        - sortinoRatio
+        - maxDrawdown
+        - currentDrawdown
+        - winRate
+        - lossRate
+        - profitFactor
+        - totalTrades
+        - winningTrades
+        - losingTrades
+        - avgWin
+        - avgLoss
+        - totalReturn
+        - annualizedReturn
+        - calmarRatio
+        - beta
+        - alpha
+
+    BacktestResults:
+      type: object
+      properties:
+        period:
+          type: string
+        initialCapital:
+          type: number
+        finalValue:
+          type: number
+        totalReturn:
+          type: number
+        annualizedReturn:
+          type: number
+        maxDrawdown:
+          type: number
+        sharpeRatio:
+          type: number
+        totalTrades:
+          type: number
+        winRate:
+          type: number
+        equityCurve:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioSnapshot"
+      required:
+        - period
+        - initialCapital
+        - finalValue
+        - totalReturn
+        - annualizedReturn
+        - maxDrawdown
+        - sharpeRatio
+        - totalTrades
+        - winRate
+        - equityCurve

@@ -1,0 +1,17 @@
+packages:
+  "recharts": "For rendering portfolio equity curves and backtest charts"
+  "framer-motion": "For smooth layout transitions and data update animations"
+  "date-fns": "For formatting timestamps in logs and charts"
+  "lucide-react": "For UI icons across the dashboard"
+  "clsx": "For conditional class name merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+
+images:
+  - path: "artifacts/trading-bot/public/images/bot-avatar.png"
+    description: "A highly abstract, futuristic glowing geometric node network representing an AI brain, dark background, electric blue and neon green accents, minimalist"
+    aspect_ratio: "1:1"
+
+notes:
+  - Using generated Orval hooks from @workspace/api-client-react for all API calls
+  - Polling is implemented via refetchInterval in React Query for real-time feel
+  - Dark terminal aesthetic applied strictly via CSS variables
