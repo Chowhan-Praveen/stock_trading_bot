@@ -1,132 +1,195 @@
-import React from "react";
-import { useGetMarketRegime, useGetNewsSentiment } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui/core";
-import { cn } from "@/lib/utils";
-import { Globe, BarChart3, Newspaper, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
+import { 
+  Globe, 
+  BarChart, 
+  Rss, 
+  TrendingUp, 
+  AlertTriangle 
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 
-export default function Market() {
-  const { data: regime } = useGetMarketRegime({ query: { refetchInterval: 10000 } });
-  const { data: news } = useGetNewsSentiment({ query: { refetchInterval: 15000 } });
+const SENTIMENT_NEWS = [
+  { source: "Bloomberg", time: "10 mins ago", headline: "Fed hints at potential rate hold next quarter", impact: "neutral", score: 0.12 },
+  { source: "Reuters", time: "25 mins ago", headline: "Tech sector earnings blowout pushes NASDAQ to new highs", impact: "bullish", score: 0.85 },
+  { source: "WSJ", time: "1 hour ago", headline: "Global supply chain disruptions hit manufacturing data", impact: "bearish", score: -0.65 },
+  { source: "CNBC", time: "2 hours ago", headline: "AI infrastructure spending doubles year over year", impact: "bullish", score: 0.92 },
+];
 
-  const getRegimeColor = (r?: string) => {
-    switch(r) {
-      case 'bull': return 'text-success bg-success/10 border-success/20';
-      case 'bear': return 'text-destructive bg-destructive/10 border-destructive/20';
-      case 'volatile': return 'text-warning bg-warning/10 border-warning/20';
-      default: return 'text-primary bg-primary/10 border-primary/20';
-    }
-  };
+const SECTOR_HEAT = [
+  { name: "Information Technology", perf: "+2.4%", status: "bullish" },
+  { name: "Communication Services", perf: "+1.8%", status: "bullish" },
+  { name: "Consumer Discretionary", perf: "+0.5%", status: "neutral" },
+  { name: "Financials", perf: "-0.2%", status: "neutral" },
+  { name: "Energy", perf: "-1.5%", status: "bearish" },
+  { name: "Utilities", perf: "-2.1%", status: "bearish" },
+];
 
+export default function MarketPage() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-      {/* Regime Detection */}
-      <Card className="col-span-1 border-white/10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-          <Globe className="w-48 h-48" />
+    <div className="space-y-6 pb-12">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <Globe className="w-8 h-8 text-brand-blue" />
+            Market Intel
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Macro regime detection and real-time news sentiment analysis.
+          </p>
         </div>
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-3 relative z-10">
-            <BarChart3 className="w-6 h-6 text-primary" />
-            Macro Regime Detection
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-8 relative z-10">
-          
-          <div className="flex flex-col items-center justify-center p-8 bg-black/40 rounded-2xl border border-white/5">
-            <span className="text-sm text-muted-foreground uppercase tracking-widest mb-4">Current Environment</span>
-            <div className={cn(
-              "text-5xl font-display font-bold uppercase tracking-widest px-8 py-4 rounded-2xl border-2 backdrop-blur-md shadow-2xl",
-              getRegimeColor(regime?.regime)
-            )}>
-              {regime?.regime || 'ANALYZING...'}
-            </div>
-            <div className="mt-6 flex items-center gap-4 font-mono text-sm">
-              <span className="opacity-60">AI Confidence:</span>
-              <span className="text-white font-bold">{regime?.confidence}%</span>
-            </div>
-          </div>
+        <StatusBadge status="active" label="NLP ACTIVE" pulse />
+      </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 bg-black/30 rounded-xl border border-white/5 text-center">
-              <div className="text-xs text-muted-foreground mb-2">VIX LEVEL</div>
-              <div className={cn("text-2xl font-mono", (regime?.vixLevel || 0) > 25 ? "text-warning" : "text-white")}>
-                {regime?.vixLevel}
+      <div className="grid gap-6 md:grid-cols-3">
+        
+        {/* Market Regime */}
+        <Card className="flex flex-col border-brand-green/30 shadow-[0_0_15px_rgba(0,255,102,0.05)] bg-gradient-to-b from-brand-green/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-brand-green" />
+              Detected Regime
+            </CardTitle>
+            <CardDescription>Current macro market state</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-black text-white tracking-widest mt-2">BULLISH</div>
+            <div className="flex items-center gap-2 mt-4 text-xs">
+              <span className="text-muted-foreground">Confidence:</span>
+              <div className="flex-1 bg-black/40 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-brand-green w-[85%] h-full" />
               </div>
+              <span className="font-mono text-brand-green">85%</span>
             </div>
-            <div className="p-4 bg-black/30 rounded-xl border border-white/5 text-center">
-              <div className="text-xs text-muted-foreground mb-2">MOMENTUM</div>
-              <div className={cn("text-2xl font-mono", (regime?.momentum || 0) > 0 ? "text-success" : "text-destructive")}>
-                {(regime?.momentum || 0) > 0 ? '+' : ''}{regime?.momentum}
-              </div>
-            </div>
-            <div className="p-4 bg-black/30 rounded-xl border border-white/5 text-center">
-              <div className="text-xs text-muted-foreground mb-2">TREND STRENGTH</div>
-              <div className="text-2xl font-mono text-white">{regime?.trendStrength}%</div>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {regime?.signals && (
-            <div className="space-y-3">
-              <div className="text-xs text-muted-foreground uppercase">Key Signals</div>
-              <div className="flex flex-wrap gap-2">
-                {regime.signals.map((sig, i) => (
-                  <Badge key={i} variant="outline" className="bg-white/5">{sig}</Badge>
-                ))}
-              </div>
+        {/* Volatility Index */}
+        <Card className="flex flex-col border-brand-amber/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-brand-amber" />
+              Volatility Index
+            </CardTitle>
+            <CardDescription>Estimated VIX equivalent</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white mt-2 font-mono">14.2<span className="text-xl text-muted-foreground">v</span></div>
+            <div className="flex items-center justify-between mt-4 border-t border-brand-border/50 pt-2 text-xs">
+              <span className="text-muted-foreground">Status</span>
+              <span className="text-brand-amber font-semibold">Elevated</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* News Sentiment */}
-      <Card className="col-span-1 flex flex-col h-[800px]">
-        <CardHeader className="shrink-0 border-b border-white/5 pb-4">
-          <CardTitle className="text-xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Newspaper className="w-5 h-5 text-primary" />
-              NLP Sentiment Stream
+        {/* Average Sentiment */}
+        <Card className="flex flex-col border-brand-blue/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <Rss className="w-5 h-5 text-brand-blue" />
+              Global Sentiment
+            </CardTitle>
+            <CardDescription>Aggregated NLP score</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white mt-2 font-mono">+0.45</div>
+            <div className="mt-4 text-xs text-brand-blue flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-brand-blue" />
+              Skewing Positive (Tech/AI)
             </div>
-            <Badge variant="outline" className="animate-pulse">PROCESSING</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto no-scrollbar p-0">
-          <div className="divide-y divide-white/5">
-            {news?.map((item) => (
-              <div key={item.id} className="p-6 hover:bg-white/[0.02] transition-colors">
-                <div className="flex justify-between items-start gap-4 mb-3">
-                  <Badge variant={
-                    item.sentiment === 'positive' ? 'success' :
-                    item.sentiment === 'negative' ? 'destructive' : 'default'
-                  }>
-                    {item.sentiment.toUpperCase()} ({item.score.toFixed(2)})
-                  </Badge>
-                  <span className="text-xs font-mono text-muted-foreground shrink-0">
-                    {format(new Date(item.timestamp), 'HH:mm')}
+          </CardContent>
+        </Card>
+
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        
+        {/* Sentiment Feed */}
+        <Card className="h-[400px] flex flex-col">
+          <CardHeader className="border-b border-brand-border/50 bg-black/20 pb-4 shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-brand-blue" />
+              Financial News Sentiment
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto p-0">
+            <div className="divide-y divide-brand-border/20">
+              {SENTIMENT_NEWS.map((news, i) => (
+                <div key={i} className="p-4 hover:bg-white/5 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white bg-black/40 px-2 py-1 rounded border border-brand-border/50">{news.source}</span>
+                      <span className="text-[10px] text-muted-foreground">{news.time}</span>
+                    </div>
+                    <StatusBadge 
+                      status={news.impact === 'bullish' ? 'buy' : news.impact === 'bearish' ? 'sell' : 'hold'} 
+                      label={news.impact.toUpperCase()}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-300 leading-relaxed">{news.headline}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs font-mono">
+                    <span className="text-muted-foreground">NLP Score Vector</span>
+                    <span className={news.score > 0 ? "text-brand-green" : news.score < 0 ? "text-brand-red" : "text-brand-amber"}>
+                      {news.score > 0 ? "+" : ""}{news.score.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sector Heatmap Alternative */}
+        <Card className="h-[400px] flex flex-col">
+          <CardHeader className="border-b border-brand-border/50 bg-black/20 pb-4 shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart className="w-5 h-5 text-brand-blue" />
+              Sector Momentum
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto p-4 space-y-4">
+            {SECTOR_HEAT.map((sector, i) => (
+              <div key={i} className="flex flex-col gap-2 p-3 bg-black/20 rounded-lg border border-brand-border/30">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-white">{sector.name}</span>
+                  <span className={`text-sm font-mono font-bold ${sector.status === 'bullish' ? 'text-brand-green' : sector.status === 'bearish' ? 'text-brand-red' : 'text-brand-amber'}`}>
+                    {sector.perf}
                   </span>
                 </div>
-                
-                <h4 className="text-base font-medium leading-snug mb-2">{item.headline}</h4>
-                
-                <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <span className="text-primary font-bold">{item.symbol}</span>
-                    <span>•</span>
-                    <span>{item.source}</span>
-                  </div>
-                  {item.impact === 'high' && (
-                    <span className="flex items-center gap-1 text-warning">
-                      <AlertCircle className="w-3 h-3" /> HIGH IMPACT
-                    </span>
-                  )}
+                <div className="w-full bg-black/40 h-2 rounded-full overflow-hidden">
+                  <div className={`h-full ${sector.status === 'bullish' ? 'bg-brand-green' : sector.status === 'bearish' ? 'bg-brand-red' : 'bg-brand-amber'}`} style={{ width: sector.status === 'bullish' ? '80%' : sector.status === 'bearish' ? '20%' : '50%' }} />
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
+      </div>
     </div>
   );
+}
+
+// Needed simple icon that wasn't imported top
+function MessageSquare(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
 }

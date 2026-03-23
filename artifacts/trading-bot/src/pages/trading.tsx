@@ -1,133 +1,111 @@
-import React from "react";
+import { Activity, ShieldCheck, Zap } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { StatusBadge, StatusType } from "@/components/ui/status-badge";
 import { useGetTrades, useGetWatchlist } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui/core";
-import { formatCurrency, formatPercent, cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Activity, BrainCircuit } from "lucide-react";
 
-export default function Trading() {
-  const { data: trades } = useGetTrades({ limit: 50 }, { query: { refetchInterval: 3000 } });
-  const { data: watchlist } = useGetWatchlist({ query: { refetchInterval: 3000 } });
+export default function TradingPage() {
+  const { data: tradesData } = useGetTrades({ limit: 50 }, { query: { refetchInterval: 3000 }});
+  const { data: watchlistData } = useGetWatchlist({ query: { refetchInterval: 5000 }});
+
+  const trades = tradesData || [];
+  const prices = watchlistData || [];
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
-      
-      {/* Live Feed */}
-      <Card className="col-span-1 xl:col-span-2 flex flex-col h-full overflow-hidden">
-        <CardHeader className="shrink-0 flex flex-row items-center justify-between">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Execution Feed
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
-            </span>
-            <span className="text-xs font-mono text-muted-foreground">LIVE</span>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto no-scrollbar p-0">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground uppercase font-mono sticky top-0 bg-card z-10 border-b border-white/10 shadow-sm">
-              <tr>
-                <th className="px-6 py-4">Time</th>
-                <th className="px-6 py-4">Symbol</th>
-                <th className="px-6 py-4">Action</th>
-                <th className="px-6 py-4 text-right">Price</th>
-                <th className="px-6 py-4 text-right">Size</th>
-                <th className="px-6 py-4 text-center">AI Confidence</th>
-                <th className="px-6 py-4 text-right">Strategy</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
-              {trades?.map((trade) => (
-                <tr key={trade.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
-                    {format(new Date(trade.timestamp), 'HH:mm:ss.SSS')}
-                  </td>
-                  <td className="px-6 py-4 font-bold text-white tracking-wider">{trade.symbol}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={
-                      trade.action === 'buy' ? 'success' : 
-                      trade.action === 'sell' ? 'destructive' : 'outline'
-                    } className="uppercase px-3">
-                      {trade.action}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">{formatCurrency(trade.price)}</td>
-                  <td className="px-6 py-4 text-right text-muted-foreground">{trade.quantity}</td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-16 h-1.5 bg-black rounded-full overflow-hidden border border-white/10">
-                        <div 
-                          className={cn(
-                            "h-full rounded-full",
-                            trade.confidence > 80 ? "bg-success" : 
-                            trade.confidence > 60 ? "bg-warning" : "bg-primary"
-                          )}
-                          style={{ width: `${trade.confidence}%` }}
-                        />
-                      </div>
-                      <span className="text-xs opacity-70 w-8 text-right">{trade.confidence}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right text-xs opacity-60 uppercase">{trade.strategy}</td>
+    <div className="space-y-6 pb-12">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <Activity className="w-8 h-8 text-brand-blue" />
+            Live Trading
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Real-time execution feed and neural watchlist monitoring.
+          </p>
+        </div>
+        <StatusBadge status="active" label="EXECUTION: LIVE" pulse />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        
+        {/* Execution Feed */}
+        <Card className="md:col-span-2 flex flex-col h-[600px] border-brand-border/50">
+          <CardHeader className="border-b border-brand-border/50 bg-black/20 pb-4 shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-brand-amber" />
+                  Execution Feed
+                </CardTitle>
+                <CardDescription className="mt-1">Live algorithmic order routing.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground bg-brand-surface px-3 py-1.5 rounded-md border border-brand-border">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                API Connected
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto p-0">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-brand-surface sticky top-0 z-10">
+                <tr className="text-muted-foreground border-b border-brand-border/50">
+                  <th className="font-medium px-6 py-4">Time</th>
+                  <th className="font-medium px-6 py-4">Symbol</th>
+                  <th className="font-medium px-6 py-4">Action</th>
+                  <th className="font-medium px-6 py-4 text-right">Fill Price</th>
+                  <th className="font-medium px-6 py-4">Strategy Source</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+              </thead>
+              <tbody className="divide-y divide-brand-border/20">
+                {trades.map((trade: any, i: number) => (
+                  <tr key={i} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-6 py-4 font-mono text-muted-foreground group-hover:text-white transition-colors">{new Date(trade.timestamp).toLocaleTimeString()}</td>
+                    <td className="px-6 py-4 font-bold text-white">{trade.symbol}</td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={trade.type.toLowerCase() as StatusType} />
+                    </td>
+                    <td className="px-6 py-4 font-mono text-white text-right">${trade.price.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-muted-foreground text-xs">{trade.reason || trade.strategyId || 'RL Agent'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
 
-      {/* Watchlist */}
-      <Card className="col-span-1 flex flex-col h-full overflow-hidden">
-        <CardHeader className="shrink-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-primary" />
-            Neural Watchlist
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto no-scrollbar p-0">
-          <div className="divide-y divide-white/5">
-            {watchlist?.map((item) => (
-              <div key={item.symbol} className="p-6 hover:bg-white/[0.02] transition-colors flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-display font-bold text-xl tracking-wider">{item.symbol}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{item.name}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono font-semibold text-lg">{formatCurrency(item.price)}</div>
-                    <div className={cn(
-                      "font-mono text-sm",
-                      item.change >= 0 ? "text-success" : "text-destructive"
-                    )}>
-                      {item.change >= 0 ? '+' : ''}{formatCurrency(item.change)} ({formatPercent(item.changePercent)})
-                    </div>
-                  </div>
+        {/* Neural Watchlist */}
+        <Card className="flex flex-col h-[600px] border-brand-border/50">
+          <CardHeader className="border-b border-brand-border/50 bg-black/20 pb-4 shrink-0">
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-brand-blue" />
+              Neural Watchlist
+            </CardTitle>
+            <CardDescription className="mt-1">Real-time asset tracking.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto p-4 space-y-3">
+            {prices.map((stock: any) => (
+              <div key={stock.symbol} className="flex flex-col p-4 rounded-lg bg-black/40 border border-brand-border/50 hover:border-brand-blue/30 transition-colors cursor-pointer group">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-bold text-lg text-white group-hover:text-brand-blue transition-colors">{stock.symbol}</span>
+                  <span className="font-mono text-white">${stock.price.toFixed(2)}</span>
                 </div>
-
-                <div className="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-white/5">
-                  <div className="text-xs text-muted-foreground font-mono">AI Prediction</div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono opacity-60">Conf: {item.predictionConfidence}%</span>
-                    <Badge variant={
-                      item.prediction === 'strong_buy' ? 'success' :
-                      item.prediction === 'buy' ? 'success' :
-                      item.prediction === 'strong_sell' ? 'destructive' :
-                      item.prediction === 'sell' ? 'destructive' : 'outline'
-                    } className="uppercase">
-                      {item.prediction.replace('_', ' ')}
-                    </Badge>
-                  </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground text-xs">24h Vol: {(stock.volume / 1000000).toFixed(1)}M</span>
+                  <span className={stock.change >= 0 ? "text-brand-green" : "text-brand-red"}>
+                    {stock.change > 0 ? "+" : ""}{stock.changePercent.toFixed(2)}%
+                  </span>
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
+      </div>
     </div>
   );
 }

@@ -8,9 +8,6 @@ import { AppShell } from "@/components/layout/shell";
 import Dashboard from "@/pages/dashboard";
 import Trading from "@/pages/trading";
 import Strategies from "@/pages/strategies";
-import Risk from "@/pages/risk";
-import Market from "@/pages/market";
-import Analytics from "@/pages/analytics";
 import Logs from "@/pages/logs";
 import NotFound from "@/pages/not-found";
 
@@ -30,9 +27,6 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/trading" component={Trading} />
         <Route path="/strategies" component={Strategies} />
-        <Route path="/risk" component={Risk} />
-        <Route path="/market" component={Market} />
-        <Route path="/analytics" component={Analytics} />
         <Route path="/logs" component={Logs} />
         <Route component={NotFound} />
       </Switch>

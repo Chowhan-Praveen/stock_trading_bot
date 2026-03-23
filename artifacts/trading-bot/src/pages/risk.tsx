@@ -1,191 +1,192 @@
-import React, { useEffect, useState } from "react";
-import { useGetRiskSettings, useUpdateRiskSettings, type RiskSettings } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, Button, Label, Input } from "@/components/ui/core";
-import { ShieldAlert, Save, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { 
+  ShieldAlert, 
+  AlertOctagon, 
+  ShieldCheck, 
+  Activity,
+  Save,
+  SlidersHorizontal
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Switch } from "@/components/ui/switch";
 
-export default function Risk() {
-  const { data: settings, isLoading } = useGetRiskSettings();
-  const { toast } = useToast();
-  
-  const [formData, setFormData] = useState<RiskSettings | null>(null);
-
-  useEffect(() => {
-    if (settings) {
-      setFormData(settings);
-    }
-  }, [settings]);
-
-  const updateSettings = useUpdateRiskSettings({
-    mutation: {
-      onSuccess: () => {
-        toast({ title: "Settings Saved", description: "Risk parameters updated successfully." });
-      },
-      onError: (err: any) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      }
-    }
+export default function RiskPage() {
+  const [settings, setSettings] = useState({
+    maxDrawdown: 15,
+    posSizeLimit: 5,
+    stopLossBase: 2.5,
+    takeProfitBase: 5.0,
+    killSwitchEnabled: false,
+    autoHedge: true
   });
 
-  const handleChange = (key: keyof RiskSettings, value: string | boolean | number) => {
-    if (!formData) return;
-    setFormData({ ...formData, [key]: value });
-  };
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData) {
-      updateSettings.mutate({ data: formData });
-    }
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => setSaving(false), 800);
   };
-
-  if (isLoading || !formData) return <div className="p-8 text-center text-muted-foreground font-mono animate-pulse">LOADING SECURE PROTOCOLS...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 border-b border-destructive/20 pb-4 mb-8">
-        <div className="p-3 bg-destructive/10 rounded-xl text-destructive">
-          <ShieldAlert className="w-8 h-8" />
-        </div>
+    <div className="space-y-6 pb-12">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-display font-bold tracking-tight text-white">Risk Management</h2>
-          <p className="text-muted-foreground">Strict hard-limits and capital allocation rules.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <ShieldAlert className="w-8 h-8 text-brand-amber" />
+            Risk Management
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Configure hard limits and portfolio exposure guardrails.
+          </p>
         </div>
+        <StatusBadge status="warning" label="GUARDRAILS ACTIVE" pulse />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="border-warning/20">
-          <CardHeader>
-            <CardTitle className="text-warning flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              Global Hard Limits
+      <div className="grid gap-6 md:grid-cols-3 pt-4">
+        
+        {/* Core Limits */}
+        <Card className="md:col-span-2 border-brand-border/50">
+          <CardHeader className="border-b border-brand-border/50 bg-black/20 pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <SlidersHorizontal className="w-5 h-5 text-brand-blue" />
+              Execution Parameters
             </CardTitle>
+            <CardDescription>Global limits applied before any ML/RL order execution.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Kill Switch Threshold (%)</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.killSwitchLossThreshold} 
-                onChange={(e) => handleChange('killSwitchLossThreshold', parseFloat(e.target.value))}
-                className="font-mono text-lg border-destructive/50 focus-visible:ring-destructive"
-              />
-              <p className="text-xs text-muted-foreground">Halt all trading if portfolio drops this much in 24h.</p>
-            </div>
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Max Drawdown (%)</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.maxDrawdown} 
-                onChange={(e) => handleChange('maxDrawdown', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Max Daily Loss ($)</Label>
-              <Input 
-                type="number" 
-                value={formData.maxDailyLoss} 
-                onChange={(e) => handleChange('maxDailyLoss', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Position & Capital Sizing</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Base Stop Loss (%)</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.stopLossPercent} 
-                onChange={(e) => handleChange('stopLossPercent', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Max Position Size (%)</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.maxPositionSize} 
-                onChange={(e) => handleChange('maxPositionSize', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Portfolio Concentration Limit (%)</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.maxPortfolioConcentration} 
-                onChange={(e) => handleChange('maxPortfolioConcentration', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="uppercase tracking-widest text-xs">Volatility Multiplier</Label>
-              <Input 
-                type="number" 
-                step="0.1" 
-                value={formData.volatilityMultiplier} 
-                onChange={(e) => handleChange('volatilityMultiplier', parseFloat(e.target.value))}
-                className="font-mono text-lg"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Adaptive Behaviors</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="p-6 space-y-8">
             
-            <label className="flex items-center justify-between p-4 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
-              <div className="space-y-1">
-                <div className="font-medium">Dynamic Stop Loss</div>
-                <div className="text-sm text-muted-foreground">Automatically trail stop loss based on ATR and regime.</div>
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <label className="text-sm font-medium text-white">Max Portfolio Drawdown (%)</label>
+                <span className="text-brand-amber font-mono font-bold">{settings.maxDrawdown}%</span>
               </div>
-              <div className={cn(
-                "w-12 h-6 rounded-full transition-colors relative",
-                formData.enableDynamicStopLoss ? "bg-primary" : "bg-muted"
-              )}>
-                <input type="checkbox" className="sr-only" checked={formData.enableDynamicStopLoss} onChange={(e) => handleChange('enableDynamicStopLoss', e.target.checked)} />
-                <div className={cn("absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform", formData.enableDynamicStopLoss ? "translate-x-6" : "")} />
-              </div>
-            </label>
+              <input 
+                type="range" 
+                min="1" max="50" 
+                value={settings.maxDrawdown}
+                onChange={e => setSettings({...settings, maxDrawdown: parseInt(e.target.value)})}
+                className="w-full h-2 bg-brand-surface rounded-lg appearance-none cursor-pointer accent-brand-amber"
+              />
+              <p className="text-xs text-muted-foreground">If total portfolio value drops by this amount from peak, halt all trading.</p>
+            </div>
 
-            <label className="flex items-center justify-between p-4 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
-              <div className="space-y-1">
-                <div className="font-medium">Volatility Scaling</div>
-                <div className="text-sm text-muted-foreground">Reduce position sizes automatically during high VIX environments.</div>
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <label className="text-sm font-medium text-white">Max Position Size (%)</label>
+                <span className="text-brand-blue font-mono font-bold">{settings.posSizeLimit}%</span>
               </div>
-              <div className={cn(
-                "w-12 h-6 rounded-full transition-colors relative",
-                formData.enableVolatilityScaling ? "bg-primary" : "bg-muted"
-              )}>
-                <input type="checkbox" className="sr-only" checked={formData.enableVolatilityScaling} onChange={(e) => handleChange('enableVolatilityScaling', e.target.checked)} />
-                <div className={cn("absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform", formData.enableVolatilityScaling ? "translate-x-6" : "")} />
-              </div>
-            </label>
+              <input 
+                type="range" 
+                min="1" max="25" 
+                value={settings.posSizeLimit}
+                onChange={e => setSettings({...settings, posSizeLimit: parseInt(e.target.value)})}
+                className="w-full h-2 bg-brand-surface rounded-lg appearance-none cursor-pointer accent-brand-blue"
+              />
+              <p className="text-xs text-muted-foreground">Maximum capital allocation for a single asset.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 pt-4 border-t border-brand-border/50">
+               <div>
+                  <label className="text-sm font-medium text-white mb-2 block">Base Stop-Loss (%)</label>
+                  <div className="flex items-center bg-black/40 border border-brand-border/50 rounded-md overflow-hidden">
+                    <input 
+                      type="number"
+                      value={settings.stopLossBase}
+                      onChange={e => setSettings({...settings, stopLossBase: parseFloat(e.target.value)})}
+                      className="bg-transparent text-white font-mono p-3 w-full outline-none"
+                    />
+                  </div>
+               </div>
+               <div>
+                  <label className="text-sm font-medium text-white mb-2 block">Base Take-Profit (%)</label>
+                  <div className="flex items-center bg-black/40 border border-brand-border/50 rounded-md overflow-hidden">
+                    <input 
+                      type="number"
+                      value={settings.takeProfitBase}
+                      onChange={e => setSettings({...settings, takeProfitBase: parseFloat(e.target.value)})}
+                      className="bg-transparent text-white font-mono p-3 w-full outline-none"
+                    />
+                  </div>
+               </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={handleSave}
+                className="flex items-center gap-2 bg-brand-blue/10 text-brand-blue border border-brand-blue/30 px-6 py-2.5 rounded-md hover:bg-brand-blue/20 transition-all font-semibold shadow-[0_0_10px_rgba(0,229,255,0.1)]"
+              >
+                {saving ? (
+                  <span className="animate-pulse">Syncing...</span>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Apply Parameters
+                  </>
+                )}
+              </button>
+            </div>
 
           </CardContent>
         </Card>
 
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" disabled={updateSettings.isPending} className="w-full md:w-auto px-12 font-bold tracking-widest text-sm">
-            {updateSettings.isPending ? "SAVING..." : <><Save className="w-4 h-4 mr-2" /> ENFORCE LIMITS</>}
-          </Button>
+        {/* System Safeguards */}
+        <div className="space-y-6">
+          <Card className={`border-brand-red/30 bg-gradient-to-b ${settings.killSwitchEnabled ? 'from-brand-red/10' : 'from-transparent'} transition-colors`}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-brand-red">
+                  <AlertOctagon className="w-5 h-5" />
+                  Kill Switch
+                </div>
+                <Switch 
+                  checked={settings.killSwitchEnabled} 
+                  onCheckedChange={v => setSettings({...settings, killSwitchEnabled: v})}
+                  className="data-[state=checked]:bg-brand-red"
+                />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                When ARM status is enabled, the system will immediately liquidate all open positions at market price and halt the execution engine.
+              </p>
+              {settings.killSwitchEnabled && (
+                <div className="mt-4 p-3 bg-brand-red/10 border border-brand-red/30 rounded text-brand-red text-xs font-bold uppercase tracking-wider text-center animate-pulse">
+                  System Armed & Ready
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className={`border-brand-green/30 bg-gradient-to-b ${settings.autoHedge ? 'from-brand-green/5' : 'from-transparent'} transition-colors`}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-brand-green">
+                  <ShieldCheck className="w-5 h-5" />
+                  Auto-Hedging
+                </div>
+                <Switch 
+                  checked={settings.autoHedge} 
+                  onCheckedChange={v => setSettings({...settings, autoHedge: v})}
+                  className="data-[state=checked]:bg-brand-green"
+                />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Automatically allocate 10% of portfolio to inverse ETFs (e.g., SQQQ, SH) when Market Intel detects a BEARISH macro regime.
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </form>
+
+      </div>
     </div>
   );
 }

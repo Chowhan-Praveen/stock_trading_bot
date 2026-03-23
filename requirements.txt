@@ -1,0 +1,10 @@
+fastapi[all]
+yfinance
+pandas
+numpy
+ta
+gymnasium
+stable-baselines3<3.0.0
+torch
+pydantic
+python-dotenv
